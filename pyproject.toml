@@ -1,0 +1,20 @@
+[project]
+name = "walkthru-building-index"
+version = "0.1.0"
+description = "Global Building Atlas LOD1 → H3-indexed GeoParquet with urban metrics"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "boto3>=1.42.59",
+    "duckdb==1.5.0.dev329",
+    "h3>=4.4.2",
+    "numpy>=2.4.2",
+    "pyarrow>=23.0.1",
+    "shapely>=2.1.2",
+    "tqdm>=4.67.3",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.4",
+]
