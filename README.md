@@ -48,17 +48,19 @@ uv run python main.py --source /data/gba/ --resolutions 5,6,7
 ## Output
 
 ```
-buildings/
+indices/building/h3/
   h3_res=3/data.parquet
   ...
   h3_res=8/data.parquet
   _metadata.json
 ```
 
+## Source
+
+> Zhu, X. X., Chen, S., Zhang, F., Shi, Y., & Wang, Y. (2025). GlobalBuildingAtlas: An Open Global and Complete Dataset of Building Polygons, Heights and LoD1 3D Models. Technical University of Munich. [doi:10.14459/2025mp1782307](https://doi.org/10.14459/2025mp1782307)
+
 ## License
 
-CC BY 4.0 — See [LICENSE](LICENSE).
+This project is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) by [walkthru.earth](https://github.com/walkthru-earth). See [LICENSE](LICENSE) for details. The source [GlobalBuildingAtlas](https://doi.org/10.14459/2025mp1782307) is by Zhu et al. (TU Munich), hosted as Parquet by [TGE Labs](https://source.coop/tge-labs/) on [Source Cooperative](https://source.coop/).
 
-## Source data
-
-Global Building Atlas LOD1 on [Source Cooperative](https://beta.source.coop/tge-labs/globalbuildingatlas-lod1/).
+Contact: [hi@walkthru.earth](mailto:hi@walkthru.earth)
