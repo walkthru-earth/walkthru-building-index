@@ -4,7 +4,7 @@
 
 **walkthru-building-index** — Global Building Atlas LOD1 (2.75B buildings, 210 GB Parquet) → H3-indexed GeoParquet with urban density metrics and native Parquet 2.11+ GEOMETRY.
 
-Part of the [walkthru-earth](https://github.com/walkthru-earth) index family alongside `walkthru-pop-index` and `dem-terrain`.
+Part of the [walkthru-earth](https://github.com/walkthru-earth) index family alongside `walkthru-pop-index`, `walkthru-weather-index`, and `dem-terrain`.
 
 ## Commands
 
@@ -28,6 +28,14 @@ uv run python main.py --dry-run                    # Preview tiles
 uv run python main.py --source s3://...            # Read directly from S3
 ```
 
+## Source data
+
+- **Global Building Atlas LOD1**: `s3://us-west-2.opendata.source.coop/tge-labs/globalbuildingatlas-lod1/`
+- ~hundreds of 5°×5° tiles, POLYGON geometry, `height` (meters, -999=nodata), `source`, `region`
+- 2.75B buildings, 210 GB total
+- Median building: 136 m², 2.0 m height
+- Citation: Zhu, X. X. et al. (2025). GlobalBuildingAtlas. TU Munich. [doi:10.14459/2025mp1782307](https://doi.org/10.14459/2025mp1782307)
+
 ## Architecture
 
 ```
@@ -48,15 +56,19 @@ Phase 3: DuckDB merge per resolution
 Phase 4: _metadata.json + progressive S3 upload
 ```
 
-## Output layout
+## S3 output layout
 
 ```
-buildings/
-  h3_res=3/data.parquet
-  h3_res=4/data.parquet
-  ...
-  h3_res=8/data.parquet
-  _metadata.json
+s3://us-west-2.opendata.source.coop/walkthru-earth/indices/building/
+  h3/
+    h3_res=3/data.parquet
+    h3_res=4/data.parquet
+    ...
+    h3_res=8/data.parquet
+    _metadata.json
+  globalbuildingatlas/
+    _metadata.json
+    zoomlevel={2-14}/data*.parquet
 ```
 
 Each Parquet file columns:
@@ -82,6 +94,11 @@ total_volume_m3, volume_density_m3_per_km2, avg_footprint_m2`
 - **`uv add`** for dependency management — never edit pyproject.toml manually
 - **`uv run ruff format . && uv run ruff check . --fix`** before every commit
 
+## Documentation files
+
+- `README.md` — GitHub repo README (code usage)
+- `SC_README.md` — Source Cooperative dataset README (uploaded to S3 as `indices/building/README.md`)
+
 ## File layout
 
 ```
@@ -93,9 +110,6 @@ pyproject.toml       Dependencies (shapely, h3, duckdb==1.5.0.dev329, numpy, pya
 CLAUDE.md            This file
 ```
 
-## Source data
+## License
 
-- **Global Building Atlas LOD1**: `s3://us-west-2.opendata.source.coop/tge-labs/globalbuildingatlas-lod1/`
-- ~hundreds of 5°×5° tiles, POLYGON geometry, `height` (meters, -999=nodata), `source`, `region`
-- 2.75B buildings, 210 GB total
-- Median building: 136 m², 2.0 m height
+CC BY 4.0 by walkthru-earth. Source data by Zhu et al. (TU Munich), hosted by TGE Labs on Source Cooperative.
