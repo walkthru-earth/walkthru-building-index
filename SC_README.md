@@ -56,12 +56,12 @@ df = con.sql("""
 ```
 walkthru-earth/indices/building/
   v2/h3/
-    h3_res=3/data.parquet       632 KB       12,239 cells
-    h3_res=4/data.parquet       3.4 MB       69,823 cells
-    h3_res=5/data.parquet        19 MB      399,355 cells
-    h3_res=6/data.parquet       101 MB    2,175,194 cells
-    h3_res=7/data.parquet       489 MB   10,392,162 cells
-    h3_res=8/data.parquet       1.9 GB   40,583,320 cells
+    h3_res=3/data.parquet       427 KB       12,239 cells
+    h3_res=4/data.parquet       2.3 MB       69,823 cells
+    h3_res=5/data.parquet      12.6 MB      399,355 cells
+    h3_res=6/data.parquet      67.2 MB    2,175,194 cells
+    h3_res=7/data.parquet       327 MB   10,392,162 cells
+    h3_res=8/data.parquet       1.3 GB   40,583,320 cells
     _metadata.json
 ```
 
@@ -76,7 +76,19 @@ walkthru-earth/indices/building/
     _metadata.json
 ```
 
-**Total: 53,632,093 cells per version.** Compression: ZSTD level 3. Row groups: 1,000,000 rows.
+### Size comparison
+
+| Res | Cells | v2 (BIGINT, 11 cols) | v1 (VARCHAR, 15 cols) | Reduction |
+|-----|------:|---------------------:|----------------------:|----------:|
+| 3 | 12,239 | 427 KB | 632 KB | 32% |
+| 4 | 69,823 | 2.3 MB | 3.4 MB | 32% |
+| 5 | 399,355 | 12.6 MB | 19 MB | 34% |
+| 6 | 2,175,194 | 67.2 MB | 101 MB | 33% |
+| 7 | 10,392,162 | 327 MB | 489 MB | 33% |
+| 8 | 40,583,320 | 1.3 GB | 1.9 GB | 32% |
+| **Total** | **53.6 M** | **~1.7 GB** | **~2.6 GB** | **33%** |
+
+Compression: ZSTD level 3. Row groups: 1,000,000 rows.
 
 ### Global Building Atlas Source Pyramid
 
