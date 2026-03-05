@@ -231,7 +231,10 @@ def _process_tile(task: dict) -> tuple[str, str, dict[int, int]]:
             n_unique = len(unique_cells)
             del h3_cells
 
-            # Cell center coordinates and area
+            # Convert H3 hex strings to int64 for efficient Parquet encoding
+            cell_ids_int = np.array([int(c, 16) for c in unique_cells], dtype=np.int64)
+
+            # Cell center coordinates and area (for intermediate aggregation)
             cell_lats = np.empty(n_unique, dtype=np.float32)
             cell_lons = np.empty(n_unique, dtype=np.float32)
             cell_areas = np.empty(n_unique, dtype=np.float32)
@@ -278,7 +281,7 @@ def _process_tile(task: dict) -> tuple[str, str, dict[int, int]]:
             out_dir.mkdir(parents=True, exist_ok=True)
             pa_table = pa.table(
                 {
-                    "h3_index": unique_cells,
+                    "h3_index": cell_ids_int,
                     "lat": cell_lats,
                     "lon": cell_lons,
                     "area_km2": cell_areas,
@@ -320,13 +323,7 @@ def get_duckdb_connection() -> duckdb.DuckDBPyConnection:
     log.info("Initializing DuckDB %s", duckdb.__version__)
     con = duckdb.connect()
 
-    for ext in ("spatial",):
-        try:
-            con.load_extension(ext)
-        except Exception:
-            con.install_extension(ext)
-            con.load_extension(ext)
-        log.info("  Extension '%s' loaded", ext)
+    log.info("  DuckDB ready (no extensions needed)")
 
     # Performance tuning for large merges
     con.sql(f"SET temp_directory='{SCRATCH_DIR / 'duckdb_tmp'}'")
@@ -394,12 +391,6 @@ def merge_temp_to_final(
         COPY (
             SELECT
                 h3_index,
-                ST_Point(
-                    any_value(lon), any_value(lat)
-                )::GEOMETRY('EPSG:4326') AS geometry,
-                any_value(lat)::FLOAT AS lat,
-                any_value(lon)::FLOAT AS lon,
-                any_value(area_km2)::FLOAT AS area_km2,
                 SUM(building_count)::INT AS building_count,
                 (SUM(building_count) / any_value(area_km2))::FLOAT
                     AS building_density,
@@ -432,7 +423,7 @@ def merge_temp_to_final(
             ORDER BY h3_index
         ) TO '{output_path}'
         (FORMAT PARQUET, COMPRESSION ZSTD, COMPRESSION_LEVEL 3,
-         ROW_GROUP_SIZE 1000000, GEOPARQUET_VERSION 'BOTH')
+         ROW_GROUP_SIZE 1000000)
     """)
 
     log.info(
@@ -480,16 +471,10 @@ def write_metadata(
         "source": "Global Building Atlas LOD1",
         "source_url": "https://beta.source.coop/tge-labs/globalbuildingatlas-lod1/",
         "crs": "EPSG:4326",
-        "geometry_type": "native_parquet_2.11_geometry",
-        "geometry_encoding": "WKB with GEOMETRY logical type annotation",
         "h3_resolutions": h3_resolutions,
         "layout": "single Parquet file per resolution, sorted by h3_index",
         "columns": {
-            "h3_index": "H3 cell ID (hex string)",
-            "geometry": "Cell center POINT, native Parquet 2.11+ GEOMETRY('EPSG:4326')",
-            "lat": "Cell center latitude (float32)",
-            "lon": "Cell center longitude (float32)",
-            "area_km2": "H3 cell area in km² (float32)",
+            "h3_index": "H3 cell ID (int64, hex-encoded H3 index as integer)",
             "building_count": "Number of buildings (int32)",
             "building_density": "Buildings per km² (float32)",
             "total_footprint_m2": "Sum of building footprint areas in m² (float32)",
@@ -501,6 +486,7 @@ def write_metadata(
             "volume_density_m3_per_km2": "Built volume per km² (float32)",
             "avg_footprint_m2": "Mean building footprint area in m² (float32)",
         },
+        "h3_index_note": "Use h3.int_to_str(h3_index) to get hex string; h3.cell_to_latlng() for lat/lon; h3.cell_area() for area_km2; h3.cell_to_boundary() for geometry",
         "height_nodata": -999,
         "height_nodata_note": (
             "Buildings with height=-999 are included in count/footprint metrics "
