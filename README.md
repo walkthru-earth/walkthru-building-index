@@ -21,7 +21,7 @@ Processes the [Global Building Atlas LOD1](https://beta.source.coop/tge-labs/glo
 | `volume_density_m3_per_km2` | Built volume per km² |
 | `avg_footprint_m2` | Mean building size |
 
-Output at H3 resolutions 3–8 with native Parquet 2.11+ GEOMETRY.
+Output at H3 resolutions 3–8. v2 (recommended) uses BIGINT `h3_index` for optimal performance; v1 (legacy) retains VARCHAR `h3_index` with geometry/lat/lon/area_km2.
 
 ## Setup
 
@@ -48,12 +48,20 @@ uv run python main.py --source /data/gba/ --resolutions 5,6,7
 ## Output
 
 ```
-indices/building/h3/
-  h3_res=3/data.parquet
-  ...
-  h3_res=8/data.parquet
-  _metadata.json
+indices/building/
+  v2/h3/                          ← recommended (BIGINT h3_index, 11 columns)
+    h3_res=3/data.parquet
+    ...
+    h3_res=8/data.parquet
+    _metadata.json
+  v1/h3/                          ← legacy (VARCHAR h3_index, 15 columns with geometry/lat/lon/area_km2)
+    h3_res=3/data.parquet
+    ...
+    h3_res=8/data.parquet
+    _metadata.json
 ```
+
+v2 drops `geometry`, `lat`, `lon`, and `area_km2` — all derivable from `h3_index` via the DuckDB `h3` extension. The BIGINT `h3_index` is smaller and faster to join/filter than VARCHAR hex strings.
 
 ## Source
 
